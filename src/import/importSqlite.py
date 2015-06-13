@@ -1,7 +1,5 @@
-
-
-
-
+import pandas as pd
+import sqlite3 as sql
 import xml.etree.ElementTree as ET
 import glob
 
@@ -15,6 +13,8 @@ def addBikeInfo( bike_id, info ):
 
 importFiles = glob.glob("*.xml")
 print importFiles
+
+infos = []
 
 for fimport in importFiles:
 
@@ -48,8 +48,14 @@ for fimport in importFiles:
             bikesAtSpot = s.split(",")
             #print bikesAtSpot
             for bike in bikesAtSpot:
-                addBikeInfo( bike, (ts,lat,lng, name, isSpot) )
+                infos.append((bike, ts,lat,lng, name, isSpot))
 
+df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
+db = sql.connect("db.sqlite")
+df.to_sql('bikes', db, if_exists='replace')
+
+#from IPython import embed
+#embed()
 #for (k,bi) in bike_info.iteritems():
 #    print len(bi)
 
