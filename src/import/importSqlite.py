@@ -1,5 +1,3 @@
-import pandas as pd
-import sqlite3 as sql
 import xml.etree.ElementTree as ET
 import glob
 
@@ -51,11 +49,24 @@ for fimport in importFiles:
             for bike in bikesAtSpot:
                 infos.append((bike, ts,lat,lng, name, isSpot))
 
-df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
-db = sql.connect("db.sqlite")
-df.to_sql('bikes', db, if_exists='replace')
-df.to_csv('bikes.csv', index=False, encoding='utf8')
+# dump as json file
+import json
+with open('db.json', 'w') as outfile:
+     json.dump(bike_info, outfile, sort_keys = True, indent = 4, ensure_ascii=False)
 
-df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
-df.to_csv('spots.csv', index=False, encoding='utf-8')
+try:
+    import pandas as pd
+    import sqlite3 as sql
+
+    # export as sqlite
+    df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
+    db = sql.connect("db.sqlite")
+    df.to_sql('bikes', db, if_exists='replace')
+    df.to_csv('bikes.csv', index=False, encoding='utf8')
+
+    df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
+    df.to_csv('spots.csv', index=False, encoding='utf-8')
+
+except ImportError:
+    print "Skipping sqlite3 export because pandas is not installed"
 
