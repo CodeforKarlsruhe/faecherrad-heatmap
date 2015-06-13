@@ -6,7 +6,8 @@
  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
  <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
- <script src="leaflet.SliderControl.min.js"></script>
+ <script src="js/jquery.scombobox.min.js"></script>
+
 <script>
 
  $(function() {
@@ -22,6 +23,7 @@ change: function( event, ui ) {
 });
 
 var map;
+var g_bikeData;
 
 $( document ).ready(function() {
 
@@ -35,6 +37,11 @@ map = L.map('map').setView([49.010059889405966, 8.3973967004567,], 13);
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
+
+$("#selectBikeBox").change(function() {
+    console.log("... updating ... with bike " + $(this).val() );
+    selectBike ( parseInt( $(this).val() ) );
+});
 
 // add a marker in the given location, attach some popup content to it and open the popup
 /*L.marker([51.5, -0.09]).addTo(map)
@@ -81,29 +88,44 @@ sliderControl.startSlider();
 console.log('load done');*/
 });
 
-$.getJSON( "bikes.json", function( data ) {
+
+function updateBikeList ( ) {
+    selectBox = $( "#selectBikeBox" );
+    selectBox.empty();
+
+    $.each( g_bikeData, function( key, val ) {
+
+       // L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+        $("<option/>").val(key).text("Bike " + key).appendTo("#selectBikeBox");
+    });
+}
+
+$.getJSON( "https://xhochy.com/nextbike/db.json", function( data ) {
+//$.getJSON( "bikes.json", function( data ) {
 var items = [];
+g_bikeData = data; 
+console.log("Json loaded !");
+updateBikeList();
+});
+
+
 //$.each( data, function( key, val ) {
 //items.push( "<li id='" + key + "'>" + val + "</li>" );
 
+
+
+function selectBike( bike_number ){ 
+
 // just for first bike ...
-console.log( data );
-    $.each( data[54073], function( key, val ) {
-        //console.log(val);
-        //var pointA = new L.marker([val[1], val[2]]).addTo(map);
-    // find latest TS
 
-    L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+    $.each( g_bikeData[bike_number], function( key, val ) {
+        console.log(val);        
+        L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+    });
 
-//console.log( key );
-//})
-});
-/*/$( "<ul/>", {
-"class": "my-new-list",
-html: items.join( "" )
-}).appendTo( "body" );*/
+};
 
-});
+
 
 </script>
 
@@ -117,6 +139,10 @@ html: items.join( "" )
   <body>
     <h2>KA Bikes</h2>
 
+
+  <select id="selectBikeBox">
+    <option>... loading ...</option>
+  </select>
 <div id="slider"></div>
  <div id="map"></div>
   </body>
