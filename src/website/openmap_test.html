@@ -2,9 +2,26 @@
 <html lang="en">
   <head>
  <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+ <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
  <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+ <script src="leaflet.SliderControl.min.js"></script>
 <script>
+
+ $(function() {
+$( "#slider" ).slider( {
+"min": 10,
+"max": 40,
+change: function( event, ui ) {
+    console.log( "changed ");
+    console.log(ui.value);
+}
+ } );
+
+});
+
+var map;
 
 $( document ).ready(function() {
 
@@ -12,7 +29,7 @@ $( document ).ready(function() {
 console.log('load start');
 
 // create a map in the "map" div, set the view to a given place and zoom
-var map = L.map('map').setView([51.505, -0.09], 13);
+map = L.map('map').setView([49.010059889405966, 8.3973967004567,], 13);
 
 // add an OpenStreetMap tile layer
 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -20,14 +37,73 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // add a marker in the given location, attach some popup content to it and open the popup
-L.marker([51.5, -0.09]).addTo(map)
+/*L.marker([51.5, -0.09]).addTo(map)
     .bindPopup('A pretty CSS3 popup. <br> Easily customizable.')
     .openPopup();
+*/
+/*
+var marker1 = L.marker([1.5, -0.09], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+var marker2 = L.marker([51.6, -0.09], {time: "2013-01-22 10:00:26+01"});
+var marker3 = L.marker([51.7, -0.09], {time: "2013-01-22 10:03:29+01"});
 
-console.log('load done');
+var pointA = new L.LatLng(51.8, -0.09);
+var pointB = new L.LatLng(51.9, -0.2);
+var pointList = [pointA, pointB];
+
+var polyline = new L.Polyline(pointList, {
+    time: "2013-01-22 10:24:59+01",
+    color: 'red',
+    weight: 3,
+    opacity: 1,
+    smoothFactor: 1
 });
 
+var geojsonFeature = {
+    "type": "Feature",
+    "properties": {
+        "name": "Coors Field",
+        "amenity": "Baseball Stadium",
+        "popupContent": "This is where the Rockies play!"
+    },
+    "geometry": {
+        "type": "Point",
+        "coordinates": [-104.99404, 39.75621]
+    }
+};
 
+
+L.geoJson(geojsonFeature).addTo(map);*/
+/*
+layerGroup = L.layerGroup([marker1, marker2, marker3, polyline ]);
+var sliderControl = L.control.sliderControl({layer:layerGroup});
+map.addControl(sliderControl);
+sliderControl.startSlider();
+console.log('load done');*/
+});
+
+$.getJSON( "bikes.json", function( data ) {
+var items = [];
+//$.each( data, function( key, val ) {
+//items.push( "<li id='" + key + "'>" + val + "</li>" );
+
+// just for first bike ...
+console.log( data );
+    $.each( data[54073], function( key, val ) {
+        //console.log(val);
+        //var pointA = new L.marker([val[1], val[2]]).addTo(map);
+    // find latest TS
+
+    L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+
+//console.log( key );
+//})
+});
+/*/$( "<ul/>", {
+"class": "my-new-list",
+html: items.join( "" )
+}).appendTo( "body" );*/
+
+});
 
 </script>
 
@@ -36,10 +112,12 @@ console.log('load done');
 #map { height: 600px; }
 </style>
 
-    <title>OpenLayers 3 example</title>
+    <title>KA Bikes</title>
   </head>
   <body>
-    <h2>My Map</h2>
+    <h2>KA Bikes</h2>
+
+<div id="slider"></div>
  <div id="map"></div>
   </body>
 </html>
