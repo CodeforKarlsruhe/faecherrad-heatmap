@@ -52,7 +52,7 @@ for fimport in importFiles:
             #print bikesAtSpot
             for bike in bikesAtSpot:
                 addBikeInfo( bike, (ts,lat,lng, name, isSpot) )
-                infos.append((bike, int(ts),lat,lng, name, isSpot))
+                infos.append((int(bike), int(ts),lat,lng, name, isSpot))
 
 # export as sqlite
 df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
@@ -73,13 +73,12 @@ df = pd.merge(df, time_border, on=('BikeID', 'period'), how="left")
 df = df[~((df['Lat'] == df['Lat_x']) & (df['Lng'] == df['Lng_x']))]
 df = df[['BikeID', 'Timestamp', 'Lat', 'Lng', 'Name', 'isSpot']]
 df.to_csv('bikes-sparse.csv', index=False, encoding='utf8')
-df.info()
 
 bike_info =  {}
 def bike_tuples(x):
     key = x.BikeID.values[0]
     x = x[['Timestamp', 'Lat', 'Lng', 'Name', 'isSpot']]
-    bike_info[key] = list(map(lambda x: list(x[1].values), x.iterrows()))
+    bike_info[str(key)] = list(map(lambda x: list(x[1].values), x.iterrows()))
 
 df.groupby('BikeID').apply(bike_tuples)
 
