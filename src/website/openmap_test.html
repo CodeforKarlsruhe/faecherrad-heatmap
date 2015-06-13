@@ -9,20 +9,50 @@
 
 <script>
 
+
+var map;
+var g_bikeData;
+var bike_moves;
+
  $(function() {
 $( "#slider" ).slider( {
-"min": 10,
-"max": 40,
+"min": 1434196227,
+"max": 1434205381,
 change: function( event, ui ) {
-    console.log( "changed ");
-    console.log(ui.value);
-}
+  /*  console.log( "changed ");
+    console.log(ui.value);*/
+
+    var this_ts = ui.value;
+
+     $.each( bike_moves, function( idx, bike_move ) {
+
+//console.log( " byke " );
+        //console.log (bike_move);
+
+        midPt =  0.5 * ( bike_move["ts_end"] - bike_move["ts_start"] ) + bike_move["ts_start"];
+
+        
+        var op = 0.0;
+           /* console.log( " WHOP " );
+            console.log( this_ts  );
+            console.log( bike_move["ts_start"] );
+            console.log( bike_move["ts_end" ] );*/
+        if (( bike_move["ts_end"] > this_ts ) && (bike_move["ts_start"] < this_ts)) {
+           /* console.log( " -- " );
+            console.log( this_ts  );
+            console.log( bike_move["ts_start"] );
+            console.log( bike_move["ts_end"] );*/
+            op = 1.0;
+        }
+
+        //console.log( bike_move["line"].options.opacity );
+        bike_move["line"].setStyle( {opacity : op} );
+     });
+    }
  } );
 
 });
 
-var map;
-var g_bikeData;
 
 $( document ).ready(function() {
 
@@ -94,10 +124,17 @@ function updateBikeList ( ) {
     selectBox = $( "#selectBikeBox" );
     selectBox.empty();
 
-    $.each( g_bikeData, function( key, val ) {
+    var bike_ids = []
 
+    $.each( g_bikeData, function( key, val ) {
+        bike_ids.push(key);
+    });
+
+    bike_ids.sort();
+
+    $.each( bike_ids, function( idx, id ) {
        // L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
-        $("<option/>").val(key).text("Bike " + key).appendTo("#selectBikeBox");
+        $("<option/>").val(id).text("Bike " + id).appendTo("#selectBikeBox");
     });
 }
 
@@ -106,6 +143,133 @@ $.getJSON( "https://xhochy.com/nextbike/db.json", function( data ) {
 var items = [];
 g_bikeData = data; 
 console.log("Json loaded !");
+
+
+// sort by timestamp
+    min_ts = 1000000000000;
+    max_ts = 0;
+    $.each( g_bikeData, function( bike_id, val ) {
+        
+        // sort by newest timestamps last !
+        val.sort( (function(a, b){return a[0] > b[0];}));
+
+        $.each( val, function( idx, v ) {
+            min_ts = Math.min(min_ts, v[0] );
+            max_ts = Math.max(max_ts, v[0] );
+        });
+
+/*        $.each( val, function( index , entry ) {
+            
+        });
+*/
+    });
+
+    console.log( "max ts = " + max_ts + " -- min ts = " + min_ts );
+
+
+// loop over bikes
+//$.each( g_bikeData, function( key, val ) { 
+    // loop over timestamps
+
+    last_lat = 0;
+    last_lng = 0;
+    last_moved_lat = 0;
+    last_moved_lng = 0;
+    last_ts = 0;
+
+    maxR = 0.01;
+    maxMax = 0;
+
+    bike_moves = [];
+
+
+$.each( g_bikeData, function( bike_id, bike_time_series ) {
+    $.each( bike_time_series, function( idx, val ) { 
+
+        //console.log(key);
+        // detect moves !
+        this_ts = val[0];
+        this_lat = val[1];
+        this_lng = val[2];
+        
+        r = Math.sqrt(  (this_lat - last_lat) * (this_lat - last_lat) + 
+             (this_lng - last_lng) * (this_lng - last_lng ) );
+        
+        //console.log( " ts " + val[0] + " r = " + r );
+        if ( r < 40.0 ) {
+            maxMax = Math.max( maxMax, r );
+        }
+        if ( r > maxR ) {
+            var moveObj = {
+                "start_lat" : last_moved_lat,
+                "start_lng" : last_moved_lng,
+                "end_lat" : this_lat,
+                "end_lng" : this_lng,
+                "ts_start" : last_ts,
+                "ts_end" : this_ts,
+                "dist" : r 
+            };
+            bike_moves.push( moveObj );
+
+            console.log( "move " + moveObj["ts_start"] );
+
+            last_moved_lat = this_lat;
+            last_moved_lng = this_lng;
+
+
+        }
+
+        last_lat = this_lat;
+        last_lng = this_lng;
+        last_ts = this_ts;
+        
+    });
+});
+
+
+    //console.log( bike_moves );
+
+    console.log( " max r = " + maxMax );
+
+//});
+
+$.each( bike_moves, function( idx, bike_move ) {
+    var pointA = new L.LatLng(bike_move["start_lat"], bike_move["start_lng"]);
+    var pointB = new L.LatLng(bike_move["end_lat"], bike_move["end_lng"]);
+    var pointList = [pointA, pointB];
+
+    var polyline = new L.Polyline(pointList, {
+        time: "2013-01-22 10:24:59+01",
+        color: 'red',
+        weight: 3,
+        opacity: 1,
+        smoothFactor: 1
+    }).addTo(map);
+
+    bike_move["line"] = polyline;
+});
+
+
+console.log("Computation done");
+
+
+tick();
+function tick() {
+    // Set the marker to be at the same point as one
+
+
+curVal = $('#slider').slider("option", "value");
+
+curVal = curVal + 150;
+ $('#slider').slider("value", curVal );
+    // Move to the next point of the line
+    // until `j` reaches the length of the array.
+
+setTimeout(tick, 400);
+    //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
+}
+
+
 updateBikeList();
 });
 
