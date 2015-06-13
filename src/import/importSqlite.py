@@ -54,6 +54,7 @@ for fimport in importFiles:
 df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
 db = sql.connect("db.sqlite")
 df.to_sql('bikes', db, if_exists='replace')
+df.to_csv('bikes.csv', index=False, encoding='utf8')
 
 df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
 df.to_csv('spots.csv', index=False, encoding='utf-8')
