@@ -2,4 +2,4 @@
 (nearly) live heatmap showing where faecherrad is used in karlsruhe
 
 
-(pad) [https://pad.okfn.org/p/HYC-Rad]
+pad: https://pad.okfn.org/p/HYC-Rad
