@@ -58,26 +58,37 @@ for fimport in importFiles:
 df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
 db = sql.connect("db.sqlite")
 df.to_sql('bikes', db, if_exists='replace')
+df.to_csv('bikes.csv', index=False, encoding='utf8')
 df['time'] = list(map(datetime.fromtimestamp, df.Timestamp.values))
 df['period'] = df.time.dt.to_period('T')
 _1minago = df.copy()
-_1minago['period'] = _1minago['period'] - 1
+_1minago['period'] = (df.time - pd.Timedelta(60000000000)).dt.to_period('T')
 _1minago = _1minago[['BikeID', 'Lat', 'Lng', 'Name', 'period']]
 _1minnext = df.copy()
-_1minnext['period'] = _1minnext['period'] + 1
+_1minnext['period'] = (df.time + pd.Timedelta(60000000000)).dt.to_period('T')
 _1minnext = _1minnext[['BikeID', 'Lat', 'Lng', 'Name', 'period']]
 time_border = pd.merge(_1minago, _1minnext, on=('BikeID', 'period'), how='inner')
 time_border = time_border.query('(Lat_x == Lat_y) & (Lng_y == Lng_y)')
 df = pd.merge(df, time_border, on=('BikeID', 'period'), how="left")
 df = df[~((df['Lat'] == df['Lat_x']) & (df['Lng'] == df['Lng_x']))]
 df = df[['BikeID', 'Timestamp', 'Lat', 'Lng', 'Name', 'isSpot']]
-df.to_csv('bikes.csv', index=False, encoding='utf8')
+df.to_csv('bikes-sparse.csv', index=False, encoding='utf8')
+df.info()
 
-df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
-df.to_csv('spots.csv', index=False, encoding='utf-8')
+bike_info =  {}
+def bike_tuples(x):
+    key = x.BikeID.values[0]
+    x = x[['Timestamp', 'Lat', 'Lng', 'Name', 'isSpot']]
+    bike_info[key] = list(map(lambda x: list(x[1].values), x.iterrows()))
+
+df.groupby('BikeID').apply(bike_tuples)
 
 # dump as json file
 import json
 with open('db.json', 'w') as outfile:
      json.dump(bike_info, outfile, sort_keys=True, indent=4, ensure_ascii=False)
+
+
+df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
+df.to_csv('spots.csv', index=False, encoding='utf-8')
 
