@@ -1,7 +1,3 @@
-
-
-
-
 import xml.etree.ElementTree as ET
 import glob
 
@@ -14,12 +10,12 @@ def addBikeInfo( bike_id, info ):
 
 
 importFiles = glob.glob("*.xml")
-#print importFiles
 
+infos = []
+spots = []
 for fimport in importFiles:
 
     ts = fimport.split("-")[1].split(".")[0]
-    #print ts
 
     tree = ET.parse(fimport)
     root = tree.getroot()
@@ -43,18 +39,34 @@ for fimport in importFiles:
         if isBike:
             name = ""
 
+        if isSpot:
+            spots.append((name, ts, xPlace.get("bikes")[0], lat, lng))
+
         s = xPlace.get("bike_numbers")
         if not s == None:
             bikesAtSpot = s.split(",")
             #print bikesAtSpot
             for bike in bikesAtSpot:
-                addBikeInfo( bike, (ts,lat,lng, name, isSpot) )
+                infos.append((bike, ts,lat,lng, name, isSpot))
 
-#for (k,bi) in bike_info.iteritems():
-#    print len(bi)
 
+# dump as json file
 import json
-print json.dumps(bike_info)
+with open('db.json', 'w') as outfile:
+     json.dump(bike_info, outfile, sort_keys = True, indent = 4, ensure_ascii=False)
 
+try:
+    import pandas as pd
+    import sqlite3 as sql
 
+    # export as sqlite
+    df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "isSpot"))
+    db = sql.connect("db.sqlite")
+    df.to_sql('bikes', db, if_exists='replace')
+
+    df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
+    df.to_csv('spots.csv', index=False, encoding='utf-8')
+
+except ImportError:
+    print "Skipping sqlite3 export because pandas is not installed"
 
