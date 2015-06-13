@@ -12,14 +12,12 @@ def addBikeInfo( bike_id, info ):
 
 
 importFiles = glob.glob("*.xml")
-print importFiles
 
 infos = []
-
+spots = []
 for fimport in importFiles:
 
     ts = fimport.split("-")[1].split(".")[0]
-    print ts
 
     tree = ET.parse(fimport)
     root = tree.getroot()
@@ -43,6 +41,9 @@ for fimport in importFiles:
         if isBike:
             name = ""
 
+        if isSpot:
+            spots.append((name, ts, xPlace.get("bikes")[0], lat, lng))
+
         s = xPlace.get("bike_numbers")
         if not s == None:
             bikesAtSpot = s.split(",")
@@ -54,10 +55,6 @@ df = pd.DataFrame(infos, columns=("BikeID", "Timestamp", "Lat", "Lng", "Name", "
 db = sql.connect("db.sqlite")
 df.to_sql('bikes', db, if_exists='replace')
 
-#from IPython import embed
-#embed()
-#for (k,bi) in bike_info.iteritems():
-#    print len(bi)
-
-
+df = pd.DataFrame(spots, columns=("name", "timestamp", "bikes", "lat", "long"))
+df.to_csv('spots.csv', index=False, encoding='utf-8')
 
