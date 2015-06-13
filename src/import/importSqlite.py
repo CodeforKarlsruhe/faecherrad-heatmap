@@ -14,12 +14,12 @@ def addBikeInfo( bike_id, info ):
 
 
 importFiles = glob.glob("*.xml")
-print importFiles
+#print importFiles
 
 for fimport in importFiles:
 
     ts = fimport.split("-")[1].split(".")[0]
-    print ts
+    #print ts
 
     tree = ET.parse(fimport)
     root = tree.getroot()
@@ -52,6 +52,9 @@ for fimport in importFiles:
 
 #for (k,bi) in bike_info.iteritems():
 #    print len(bi)
+
+import json
+print json.dumps(bike_info)
 
 
 
