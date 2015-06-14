@@ -19,6 +19,7 @@
         }
 
         .cursor {
+            -webkit-animation: blinking 1s ease-in-out infinite;
             animation: blinking 1s ease-in-out infinite;
             text-shadow: none;
         }
@@ -45,6 +46,14 @@
         }
 
         @keyframes blinking {
+            from, to {
+                color: transparent;
+            }
+            50% {
+                color: #20F200;
+            }
+        }
+        @-webkit-keyframes blinking {
             from, to {
                 color: transparent;
             }
@@ -392,7 +401,7 @@
         }
 
     </script>
-    <title>KA Bikes</title>
+    <title>Bikes in Motion</title>
 </head>
 <body>
 <h1>&gt; F&auml;cherrad&nbsp;<span class="cursor">&#9608;</span></h1>
