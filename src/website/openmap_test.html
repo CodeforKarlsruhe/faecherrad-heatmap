@@ -12,7 +12,26 @@
 
 var map;
 var g_bikeData;
-var bike_moves;
+var bike_moves = null;
+var g_thisTS = 0; 
+var g_movingBikes = [];
+
+
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp*1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ',' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  return time;
+}
+
+
 
  $(function() {
 $( "#slider" ).slider( {
@@ -22,7 +41,14 @@ change: function( event, ui ) {
   /*  console.log( "changed ");
     console.log(ui.value);*/
 
+    
+
     var this_ts = ui.value;
+    g_thisTS = this_ts;
+
+    stime = timeConverter( this_ts );
+    //console.log( "Moved to time " + stime );
+    $("#time").html( stime );
 
      $.each( bike_moves, function( idx, bike_move ) {
 
@@ -81,7 +107,7 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
 
 L.control.scale().addTo(map);
 
-$("#selectBikeBox").change(function() {
+$("#selectBikeBox").click(function() {
     console.log("... updating ... with bike " + $(this).val() );
     selectBike ( parseInt( $(this).val() ) );
 });
@@ -176,8 +202,12 @@ console.log("Json loaded !");
 */
     });
 
-    console.log( "max ts = " + max_ts + " -- min ts = " + min_ts );
+   // console.log( "max ts = " + max_ts + " -- min ts = " + min_ts );
 
+   // $('#slider').slider("min", min_ts );
+   // $('#slider').slider("max", max_ts );
+    $('#slider').slider("option", "min", min_ts );
+    $('#slider').slider("option", "max", max_ts );
 
 // loop over bikes
 //$.each( g_bikeData, function( key, val ) { 
@@ -223,7 +253,7 @@ $.each( g_bikeData, function( bike_id, bike_time_series ) {
             };
             bike_moves.push( moveObj );
 
-            console.log( "move " + moveObj["ts_start"] );
+            //console.log( "move " + moveObj["ts_start"] );
 
             last_moved_lat = this_lat;
             last_moved_lng = this_lng;
@@ -259,6 +289,7 @@ $.each( bike_moves, function( idx, bike_move ) {
     }).addTo(map);
 
     bike_move["line"] = polyline;
+    bike_move["bike"] = L.marker([0,0], {icon: bikeIcon, "title": "Bike !" }).addTo(map);
 });
 
 
@@ -272,7 +303,7 @@ function tick() {
 
 curVal = $('#slider').slider("option", "value");
 
-curVal = curVal + 150;
+curVal = curVal + 250;
  $('#slider').slider("value", curVal );
     // Move to the next point of the line
     // until `j` reaches the length of the array.
@@ -285,6 +316,49 @@ setTimeout(tick, 400);
 updateBikeList();
 });
 
+tick_move_bikes();
+function tick_move_bikes() {
+
+    if ( bike_moves == null ) {
+        setTimeout(tick_move_bikes, 200);
+        return;
+    }
+        
+    // move bike icons ?!?
+
+    //console.log( "ts is " + $( "#slider" ).slider( "option", "value" ) );
+
+    $.each( bike_moves, function( idx, bike_move ) {
+        var op = 0.0;
+        if (( bike_move["ts_end"] > g_thisTS ) && (bike_move["ts_start"] < g_thisTS)) {
+
+            tsDelta = bike_move["ts_end"] - bike_move["ts_start"];
+            tsPassed = g_thisTS - bike_move["ts_start"];
+
+            percentTraveled = tsPassed / tsDelta;
+
+            deltaX = bike_move["end_lat"] -  bike_move["start_lat"];
+            deltaY = bike_move["end_lng"] -  bike_move["start_lng"];
+            
+            posX = percentTraveled * deltaX + bike_move["start_lat"];
+            posY = percentTraveled * deltaY + bike_move["start_lng"];
+
+            console.log("moving bike to " + posX + " : " + posY );
+
+            bike_move["bike"].setLatLng( new L.LatLng( posX, posY ));
+
+            op = 1.0;
+        }
+
+        //console.log( bike_move["line"].options.opacity );
+        bike_move["bike"].setOpacity( op );
+     });
+
+
+    // Set the marker to be at the same point as one
+    setTimeout(tick_move_bikes, 100);
+    //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
+}
 
 //$.each( data, function( key, val ) {
 //items.push( "<li id='" + key + "'>" + val + "</li>" );
@@ -297,7 +371,7 @@ function selectBike( bike_number ){
 
     $.each( g_bikeData[bike_number], function( key, val ) {
         console.log(val);        
-        L.marker([val[1], val[2]], {icon: bikeIcon, "title": "Timestamp " + val[0] }).addTo(map);
+        L.marker([val[1], val[2]], {icon: bikeIcon, "title": "Bike " + bike_number + " Timestamp " + val[0] }).addTo(map);
     });
 
 };
@@ -321,6 +395,7 @@ function selectBike( bike_number ){
     <option>... loading ...</option>
   </select>
 <div id="slider"></div>
+<div id="time">TIME</div>
  <div id="map"></div>
   </body>
 </html>
