@@ -192,9 +192,10 @@
             g_bikeData = data;
             console.log("Json loaded !");
 
+
             // sort by timestamp
-            min_ts = 1000000000000;
-            max_ts = 0;
+            var min_ts = 10000000000000;
+            var max_ts = 0;
             $.each(g_bikeData, function (bike_id, val) {
 
                 // sort by newest timestamps last !
@@ -213,53 +214,70 @@
             $('#slider').slider("option", "max", max_ts);
 
             // varibales to store the previous state of a bike
-            last_lat = 0;
-            last_lng = 0;
-            last_moved_lat = 0;
-            last_moved_lng = 0;
-            last_ts = 0;
+            var last_lat = 0;
+            var last_lng = 0;
+            var last_moved_lat = 0;
+            var last_moved_lng = 0;
+            var last_ts = 0;
 
             // minimum R a bike has to change it's location to be considered a move
-            maxR = 0.01;
+            var maxR = 0.001;
             // maximum moved distance
-            maxMax = 0;
+            var maxMax = 0;
 
             g_bike_moves = [];
 
+            var dtpoints = 0;
             $.each(g_bikeData, function (bike_id, bike_time_series) {
+                // new bike initialize
+                last_lat = null;
+                last_lng = null;
+                last_ts = null;
+
                 $.each(bike_time_series, function (idx, val) {
+                    dtpoints = dtpoints + 1;
 
                     //console.log(key);
                     // detect moves !
-                    this_ts = val[0];
-                    this_lat = val[1];
-                    this_lng = val[2];
+                    var this_ts = val[0];
+                    var this_lat = val[1];
+                    var this_lng = val[2];
 
-                    r = Math.sqrt((this_lat - last_lat) * (this_lat - last_lat) +
-                            (this_lng - last_lng) * (this_lng - last_lng ));
-
-                    //console.log( " ts " + val[0] + " r = " + r );
-                    if (r < 40.0) {
-                        maxMax = Math.max(maxMax, r);
-                    }
-                    if (r > maxR) {
-                        var moveObj = {
-                            "start_lat": last_moved_lat,
-                            "start_lng": last_moved_lng,
-                            "end_lat": this_lat,
-                            "end_lng": this_lng,
-                            "ts_start": last_ts,
-                            "ts_end": this_ts,
-                            "moved": false,
-                            "bike_number": bike_id,
-                            "dist": r
-                        };
-                        g_bike_moves.push(moveObj);
-
-                        //console.log( "move " + moveObj["ts_start"] );
-
+                    // initial position ?
+                    if ( last_ts == null ) {
+                        last_ts = this_ts;
+                        last_lat = this_lat;
+                        last_lng = this_lng;
                         last_moved_lat = this_lat;
                         last_moved_lng = this_lng;
+
+                    } else {
+
+                        var r = Math.sqrt((this_lat - last_lat) * (this_lat - last_lat) +
+                                (this_lng - last_lng) * (this_lng - last_lng ));
+
+                        if (r < 40.0) {
+                            maxMax = Math.max(maxMax, r);
+                        }
+                        if (r > maxR) {
+                            console.log("> making move");
+                            var moveObj = {
+                                "start_lat": last_moved_lat,
+                                "start_lng": last_moved_lng,
+                                "end_lat": this_lat,
+                                "end_lng": this_lng,
+                                "ts_start": last_ts,
+                                "ts_end": this_ts,
+                                "moved": false,
+                                "bike_number": bike_id,
+                                "dist": r
+                            };
+                            g_bike_moves.push(moveObj);
+
+                            //console.log( "move " + moveObj["ts_start"] );
+                            last_moved_lat = this_lat;
+                            last_moved_lng = this_lng;
+                        }
                     }
 
                     last_lat = this_lat;
@@ -270,6 +288,7 @@
             });
 
             console.log(" max r = " + maxMax);
+            console.log("found " + g_bike_moves.length + " bike moves with " + dtpoints + " data points");
 
             // generate the direct line and bike marker for each move
             $.each(g_bike_moves, function (idx, bike_move) {
