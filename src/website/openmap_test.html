@@ -1,6 +1,37 @@
 <!doctype html>
 <html lang="en">
   <head>
+  <style type="text/css">
+  body {background-color: #000; font-family: monospace; color: #20F200}
+  h1 {text-shadow:
+    0 0 10px green,
+    0 0 20px green,
+    0 0 30px #FFFFFF,
+    0 0 40px #FFFFFF,
+    0 0 70px green;
+    width: 150px;
+    display: inline;}
+  .cursor {
+    animation: blinking 1s ease-in-out infinite;
+    text-shadow:none;
+    }
+  select {
+   background: transparent;
+   width: 268px;
+   padding: 5px;
+   font-size: 16px;
+   line-height: 1;
+   border: 0;
+   border-radius: 0;
+   height: 34px;
+   color: #fff;
+   }
+   #map { height: 600px; margin-top: 20px;}
+  @keyframes blinking {
+    from, to {color: transparent; }
+    50% { color: #20F200; }
+    }
+  </style>
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
  <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
@@ -379,24 +410,17 @@ function selectBike( bike_number ){
 
 
 </script>
-
-<style>
-
-#map { height: 600px; }
-</style>
-
     <title>KA Bikes</title>
   </head>
   <body>
-    <h2>KA Bikes</h2>
-
-
+    <h1>&gt; F&auml;cherrad&nbsp;<span class="cursor">&#9608;</span></h1>
   <select id="selectBikeBox">
     <option>... loading ...</option>
   </select>
-<div id="slider"></div>
-<div id="time">TIME</div>
  <div id="map"></div>
+ <div id="slider"></div>
+<div id="time">TIME</div>
+
   </body>
 </html>
 
