@@ -63,9 +63,10 @@
 
         var map;
         var g_bikeData;
-        var bike_moves = null;
+        var g_bike_moves = null;
         var g_thisTS = 0;
         var g_movingBikes = [];
+
 
         function timeConverter(UNIX_timestamp) {
             var a = new Date(UNIX_timestamp * 1000);
@@ -92,7 +93,7 @@
                     //console.log( "Moved to time " + stime );
                     $("#time").html(stime);
 
-                    $.each(bike_moves, function (idx, bike_move) {
+                    $.each(g_bike_moves, function (idx, bike_move) {
                         var op = 0.0;
                         if (( bike_move["ts_end"] > this_ts ) && (bike_move["ts_start"] < this_ts)) {
                             op = 1.0;
@@ -151,15 +152,15 @@
 
             L.control.scale().addTo(map);
 
+            // update if a new bike gets selected
             $("#selectBikeBox").click(function () {
                 console.log("... updating ... with bike " + $(this).val());
                 selectBike(parseInt($(this).val()));
             });
 
-
         });
 
-
+        /* take the bike data loaded via JSON and update the selection combo box */
         function updateBikeList() {
             selectBox = $("#selectBikeBox");
             selectBox.empty();
@@ -178,14 +179,20 @@
             });
         }
 
+        /* load json data containing bike information from server and
+            - sort by timestamp
+            - compute the moved distance between two bike positions and
+              create a entry in the move list if the distance is large than a
+              predefined delta. Right now, only using lat&lng and not km, can be improved
+            - generate direct line and marker for each move
+        */
+
         $.getJSON("https://xhochy.com/nextbike/db.json", function (data) {
-//$.getJSON( "bikes.json", function( data ) {
             var items = [];
             g_bikeData = data;
             console.log("Json loaded !");
 
-
-// sort by timestamp
+            // sort by timestamp
             min_ts = 1000000000000;
             max_ts = 0;
             $.each(g_bikeData, function (bike_id, val) {
@@ -199,26 +206,25 @@
                     min_ts = Math.min(min_ts, v[0]);
                     max_ts = Math.max(max_ts, v[0]);
                 });
-
-                /*        $.each( val, function( index , entry ) {
-
-                 });
-                 */
             });
+
+            // set the max / min time points for the sliders
             $('#slider').slider("option", "min", min_ts);
             $('#slider').slider("option", "max", max_ts);
 
+            // varibales to store the previous state of a bike
             last_lat = 0;
             last_lng = 0;
             last_moved_lat = 0;
             last_moved_lng = 0;
             last_ts = 0;
 
+            // minimum R a bike has to change it's location to be considered a move
             maxR = 0.01;
+            // maximum moved distance
             maxMax = 0;
 
-            bike_moves = [];
-
+            g_bike_moves = [];
 
             $.each(g_bikeData, function (bike_id, bike_time_series) {
                 $.each(bike_time_series, function (idx, val) {
@@ -245,16 +251,15 @@
                             "ts_start": last_ts,
                             "ts_end": this_ts,
                             "moved": false,
+                            "bike_number": bike_id,
                             "dist": r
                         };
-                        bike_moves.push(moveObj);
+                        g_bike_moves.push(moveObj);
 
                         //console.log( "move " + moveObj["ts_start"] );
 
                         last_moved_lat = this_lat;
                         last_moved_lng = this_lng;
-
-
                     }
 
                     last_lat = this_lat;
@@ -264,14 +269,10 @@
                 });
             });
 
-
-            //console.log( bike_moves );
-
             console.log(" max r = " + maxMax);
 
-//});
-
-            $.each(bike_moves, function (idx, bike_move) {
+            // generate the direct line and bike marker for each move
+            $.each(g_bike_moves, function (idx, bike_move) {
                 var pointA = new L.LatLng(bike_move["start_lat"], bike_move["start_lng"]);
                 var pointB = new L.LatLng(bike_move["end_lat"], bike_move["end_lng"]);
                 var pointList = [pointA, pointB];
@@ -285,46 +286,45 @@
                 }).addTo(map);
 
                 bike_move["line"] = polyline;
-                bike_move["bike"] = L.marker([0, 0], {icon: bikeIconMoving, "title": "Bike !"}).addTo(map);
+                bike_move["bike"] = L.marker([0, 0], {icon: bikeIconMoving, "title": "Bike " + bike_move["bike_number"] }).addTo(map);
             });
 
-
             console.log("Computation done");
-
-
-            tick();
-            function tick() {
-                // Set the marker to be at the same point as one
-
-
-                curVal = $('#slider').slider("option", "value");
-
-                curVal = curVal + 50;
-                $('#slider').slider("value", curVal);
-                // Move to the next point of the line
-                // until `j` reaches the length of the array.
-
-                setTimeout(tick, 100);
-                //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
-            }
 
 
             updateBikeList();
         });
 
+        // timed moving of the timestamp slider
+        tick();
+        function tick() {
+            // Set the marker to be at the same point as one
+            // wait for data
+            if (g_bike_moves == null) {
+                setTimeout(tick, 200);
+                return;
+            }
+
+            // move the slider
+            curVal = $('#slider').slider("option", "value");
+            curVal = curVal + 50;
+            $('#slider').slider("value", curVal);
+
+            setTimeout(tick, 100);
+        }
+
+        // timed moving of the bikes
         tick_move_bikes();
         function tick_move_bikes() {
 
-            if (bike_moves == null) {
+            // wait for data ..
+            if (g_bike_moves == null) {
                 setTimeout(tick_move_bikes, 200);
                 return;
             }
 
-            // move bike icons ?!?
-
-            //console.log( "ts is " + $( "#slider" ).slider( "option", "value" ) );
-
-            $.each(bike_moves, function (idx, bike_move) {
+            // check if a bike move is in our time window and move the associated map marker
+            $.each(g_bike_moves, function (idx, bike_move) {
                 var op = 0.0;
                 if (( bike_move["ts_end"] > g_thisTS ) && (bike_move["ts_start"] < g_thisTS)) {
 
@@ -339,27 +339,19 @@
                     posX = percentTraveled * deltaX + bike_move["start_lat"];
                     posY = percentTraveled * deltaY + bike_move["start_lng"];
 
-                    //console.log("moving bike to " + posX + " : " + posY );
-
                     bike_move["bike"].setLatLng(new L.LatLng(posX, posY));
 
                     op = 1.0;
                 }
-
-                //console.log( bike_move["line"].options.opacity );
                 bike_move["bike"].setOpacity(op);
             });
-
-
-            // Set the marker to be at the same point as one
             setTimeout(tick_move_bikes, 100);
-            //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
         }
 
+        /*
+        select a bike by placing a marker for all its known positions on the map
+         */
         function selectBike(bike_number) {
-
-// just for first bike ...
-
             $.each(g_bikeData[bike_number], function (key, val) {
                 console.log(val);
                 L.marker([val[1], val[2]], {
@@ -369,8 +361,6 @@
             });
 
         }
-        ;
-
 
     </script>
     <title>KA Bikes</title>
