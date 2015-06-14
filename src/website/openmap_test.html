@@ -1,385 +1,390 @@
 <!doctype html>
 <html lang="en">
-  <head>
-  <style type="text/css">
-  body {background-color: #000; font-family: monospace; color: #20F200}
-  h1 {text-shadow:
-    0 0 10px green,
-    0 0 20px green,
-    0 0 30px #FFFFFF,
-    0 0 40px #FFFFFF,
-    0 0 70px green;
-    width: 150px;
-    display: inline;}
-  .cursor {
-    animation: blinking 1s ease-in-out infinite;
-    text-shadow:none;
-    }
-    #slider {
-    margin: 5px 0;
-    }
-  select {
-   background: transparent;
-   width: 268px;
-   padding: 5px;
-   font-size: 16px;
-   line-height: 1;
-   border: 0;
-   border-radius: 0;
-   height: 34px;
-   color: #fff;
-   }
-   #map { height: 600px; margin-top: 10px;}
-  @keyframes blinking {
-    from, to {color: transparent; }
-    50% { color: #20F200; }
-    }
-  </style>
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
- <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/le-frog/jquery-ui.css">
- <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
- <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
-
-<script>
-
-
-var map;
-var g_bikeData;
-var bike_moves = null;
-var g_thisTS = 0; 
-var g_movingBikes = [];
-
-
-
-function timeConverter(UNIX_timestamp){
-  var a = new Date(UNIX_timestamp*1000);
-  var months = ['Jan','Feb','Mar','Apr','May','Juni','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var year = a.getFullYear();
-  var month = months[a.getMonth()];
-  var date = a.getDate();
-  var hour = a.getHours();
-  var min = a.getMinutes();
-  var sec = a.getSeconds();
-  var time = date + '. ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
-  return time;
-}
-
-
-
- $(function() {
-$( "#slider" ).slider( {
-"min": 1434196227,
-"max": 1434205381,
-change: function( event, ui ) {
-  /*  console.log( "changed ");
-    console.log(ui.value);*/
-
-    
-
-    var this_ts = ui.value;
-    g_thisTS = this_ts;
-
-    stime = timeConverter( this_ts );
-    //console.log( "Moved to time " + stime );
-    $("#time").html( stime );
-
-     $.each( bike_moves, function( idx, bike_move ) {
-
-//console.log( " byke " );
-        //console.log (bike_move);
-
-        midPt =  0.5 * ( bike_move["ts_end"] - bike_move["ts_start"] ) + bike_move["ts_start"];
-
-        
-        var op = 0.0;
-           /* console.log( " WHOP " );
-            console.log( this_ts  );
-            console.log( bike_move["ts_start"] );
-            console.log( bike_move["ts_end" ] );*/
-        if (( bike_move["ts_end"] > this_ts ) && (bike_move["ts_start"] < this_ts)) {
-           /* console.log( " -- " );
-            console.log( this_ts  );
-            console.log( bike_move["ts_start"] );
-            console.log( bike_move["ts_end"] );*/
-            op = 1.0;
-            
-            if ( bike_move["moved" ] == false )
-            {
-                g_movingBikes.push( 
-                    {
-                        "ts_start" : bike_move["ts_start"],
-                        "ts_end" : bike_move["ts_end"] 
-                     });
-
-                bike_move["moved" ] = true;
-            }
+<head>
+    <style type="text/css">
+        body {
+            background-color: #000;
+            font-family: monospace;
+            color: #20F200
         }
 
-        //console.log( bike_move["line"].options.opacity );
-        bike_move["line"].setStyle( {opacity : op} );
-     });
-    }
- } );
+        h1 {
+            text-shadow: 0 0 10px green,
+            0 0 20px green,
+            0 0 30px #FFFFFF,
+            0 0 40px #FFFFFF,
+            0 0 70px green;
+            width: 150px;
+            display: inline;
+        }
 
-});
+        .cursor {
+            animation: blinking 1s ease-in-out infinite;
+            text-shadow: none;
+        }
+
+        #slider {
+            margin: 5px 0;
+        }
+
+        select {
+            background: transparent;
+            width: 268px;
+            padding: 5px;
+            font-size: 16px;
+            line-height: 1;
+            border: 0;
+            border-radius: 0;
+            height: 34px;
+            color: #fff;
+        }
+
+        #map {
+            height: 600px;
+            margin-top: 10px;
+        }
+
+        @keyframes blinking {
+            from, to {
+                color: transparent;
+            }
+            50% {
+                color: #20F200;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/le-frog/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+
+    <script>
+
+        var map;
+        var g_bikeData;
+        var bike_moves = null;
+        var g_thisTS = 0;
+        var g_movingBikes = [];
+
+        function timeConverter(UNIX_timestamp) {
+            var a = new Date(UNIX_timestamp * 1000);
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Juni', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var year = a.getFullYear();
+            var month = months[a.getMonth()];
+            var date = a.getDate();
+            var hour = a.getHours();
+            var min = a.getMinutes();
+            var sec = a.getSeconds();
+            var time = date + '. ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec;
+            return time;
+        }
+
+        $(function () {
+            $("#slider").slider({
+                "min": 1434196227,
+                "max": 1434205381,
+                change: function (event, ui) {
+                    var this_ts = ui.value;
+                    g_thisTS = this_ts;
+
+                    stime = timeConverter(this_ts);
+                    //console.log( "Moved to time " + stime );
+                    $("#time").html(stime);
+
+                    $.each(bike_moves, function (idx, bike_move) {
+                        var op = 0.0;
+                        if (( bike_move["ts_end"] > this_ts ) && (bike_move["ts_start"] < this_ts)) {
+                            op = 1.0;
+
+                            if (bike_move["moved"] == false) {
+                                g_movingBikes.push(
+                                        {
+                                            "ts_start": bike_move["ts_start"],
+                                            "ts_end": bike_move["ts_end"]
+                                        });
+
+                                bike_move["moved"] = true;
+                            }
+                        }
+
+                        bike_move["line"].setStyle({opacity: op});
+                    });
+                }
+            });
+
+        });
 
 
-$( document ).ready(function() {
+        $(document).ready(function () {
+
+            console.log('load start');
+
+            // create a map in the "map" div, set the view to a given place and zoom
+            map = L.map('map').setView([49.010059889405966, 8.3973967004567,], 13);
+
+            // we're doing our own icons here
+            bikeIcon = L.icon({
+                iconUrl: 'bike-icon.png',
+
+                iconSize: [32, 32], // size of the icon
+                shadowSize: [0, 0], // size of the shadow
+                iconAnchor: [16, 16], // point of the icon which will correspond to marker's location
+                shadowAnchor: [0, 0],  // the same for the shadow
+                popupAnchor: [-3, -32] // point from which the popup should open relative to the iconAnchor
+            });
+
+            bikeIconMoving = L.icon({
+                iconUrl: 'bike-icon-yellow.png',
+
+                iconSize: [32, 32], // size of the icon
+                shadowSize: [0, 0], // size of the shadow
+                iconAnchor: [16, 16], // point of the icon which will correspond to marker's location
+                shadowAnchor: [0, 0],  // the same for the shadow
+                popupAnchor: [-3, -32] // point from which the popup should open relative to the iconAnchor
+            });
+
+            // add an OpenStreetMap tile layer
+            L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            L.control.scale().addTo(map);
+
+            $("#selectBikeBox").click(function () {
+                console.log("... updating ... with bike " + $(this).val());
+                selectBike(parseInt($(this).val()));
+            });
 
 
-console.log('load start');
-
-// create a map in the "map" div, set the view to a given place and zoom
-map = L.map('map').setView([49.010059889405966, 8.3973967004567,], 13);
-
-// we're doing our own icons here
-bikeIcon = L.icon({
-    iconUrl: 'bike-icon.png',
-
-    iconSize:     [32, 32], // size of the icon
-    shadowSize:   [0, 0], // size of the shadow
-    iconAnchor:   [16, 16], // point of the icon which will correspond to marker's location
-    shadowAnchor: [0, 0],  // the same for the shadow
-    popupAnchor:  [-3, -32] // point from which the popup should open relative to the iconAnchor
-});
+        });
 
 
-// add an OpenStreetMap tile layer
-L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+        function updateBikeList() {
+            selectBox = $("#selectBikeBox");
+            selectBox.empty();
 
-L.control.scale().addTo(map);
+            var bike_ids = []
 
-$("#selectBikeBox").click(function() {
-    console.log("... updating ... with bike " + $(this).val() );
-    selectBike ( parseInt( $(this).val() ) );
-});
+            $.each(g_bikeData, function (key, val) {
+                bike_ids.push(key);
+            });
 
+            bike_ids.sort();
 
-});
+            $.each(bike_ids, function (idx, id) {
+                // L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
+                $("<option/>").val(id).text("Bike " + id).appendTo("#selectBikeBox");
+            });
+        }
 
-
-function updateBikeList ( ) {
-    selectBox = $( "#selectBikeBox" );
-    selectBox.empty();
-
-    var bike_ids = []
-
-    $.each( g_bikeData, function( key, val ) {
-        bike_ids.push(key);
-    });
-
-    bike_ids.sort();
-
-    $.each( bike_ids, function( idx, id ) {
-       // L.marker([val[1], val[2]], {time: "2013-01-22 08:42:26+01"}).addTo(map);
-        $("<option/>").val(id).text("Bike " + id).appendTo("#selectBikeBox");
-    });
-}
-
-$.getJSON( "https://xhochy.com/nextbike/db.json", function( data ) {
+        $.getJSON("https://xhochy.com/nextbike/db.json", function (data) {
 //$.getJSON( "bikes.json", function( data ) {
-var items = [];
-g_bikeData = data; 
-console.log("Json loaded !");
+            var items = [];
+            g_bikeData = data;
+            console.log("Json loaded !");
 
 
 // sort by timestamp
-    min_ts = 1000000000000;
-    max_ts = 0;
-    $.each( g_bikeData, function( bike_id, val ) {
-        
-        // sort by newest timestamps last !
-        val.sort( (function(a, b){return a[0] > b[0];}));
+            min_ts = 1000000000000;
+            max_ts = 0;
+            $.each(g_bikeData, function (bike_id, val) {
 
-        $.each( val, function( idx, v ) {
-            min_ts = Math.min(min_ts, v[0] );
-            max_ts = Math.max(max_ts, v[0] );
-        });
+                // sort by newest timestamps last !
+                val.sort((function (a, b) {
+                    return a[0] > b[0];
+                }));
 
-/*        $.each( val, function( index , entry ) {
-            
-        });
-*/
-    });
-    $('#slider').slider("option", "min", min_ts );
-    $('#slider').slider("option", "max", max_ts );
+                $.each(val, function (idx, v) {
+                    min_ts = Math.min(min_ts, v[0]);
+                    max_ts = Math.max(max_ts, v[0]);
+                });
 
-    last_lat = 0;
-    last_lng = 0;
-    last_moved_lat = 0;
-    last_moved_lng = 0;
-    last_ts = 0;
+                /*        $.each( val, function( index , entry ) {
 
-    maxR = 0.01;
-    maxMax = 0;
+                 });
+                 */
+            });
+            $('#slider').slider("option", "min", min_ts);
+            $('#slider').slider("option", "max", max_ts);
 
-    bike_moves = [];
+            last_lat = 0;
+            last_lng = 0;
+            last_moved_lat = 0;
+            last_moved_lng = 0;
+            last_ts = 0;
 
+            maxR = 0.01;
+            maxMax = 0;
 
-$.each( g_bikeData, function( bike_id, bike_time_series ) {
-    $.each( bike_time_series, function( idx, val ) { 
-
-        //console.log(key);
-        // detect moves !
-        this_ts = val[0];
-        this_lat = val[1];
-        this_lng = val[2];
-        
-        r = Math.sqrt(  (this_lat - last_lat) * (this_lat - last_lat) + 
-             (this_lng - last_lng) * (this_lng - last_lng ) );
-        
-        //console.log( " ts " + val[0] + " r = " + r );
-        if ( r < 40.0 ) {
-            maxMax = Math.max( maxMax, r );
-        }
-        if ( r > maxR ) {
-            var moveObj = {
-                "start_lat" : last_moved_lat,
-                "start_lng" : last_moved_lng,
-                "end_lat" : this_lat,
-                "end_lng" : this_lng,
-                "ts_start" : last_ts,
-                "ts_end" : this_ts,
-                "moved": false,
-                "dist" : r 
-            };
-            bike_moves.push( moveObj );
-
-            //console.log( "move " + moveObj["ts_start"] );
-
-            last_moved_lat = this_lat;
-            last_moved_lng = this_lng;
+            bike_moves = [];
 
 
-        }
+            $.each(g_bikeData, function (bike_id, bike_time_series) {
+                $.each(bike_time_series, function (idx, val) {
 
-        last_lat = this_lat;
-        last_lng = this_lng;
-        last_ts = this_ts;
-        
-    });
-});
+                    //console.log(key);
+                    // detect moves !
+                    this_ts = val[0];
+                    this_lat = val[1];
+                    this_lng = val[2];
+
+                    r = Math.sqrt((this_lat - last_lat) * (this_lat - last_lat) +
+                            (this_lng - last_lng) * (this_lng - last_lng ));
+
+                    //console.log( " ts " + val[0] + " r = " + r );
+                    if (r < 40.0) {
+                        maxMax = Math.max(maxMax, r);
+                    }
+                    if (r > maxR) {
+                        var moveObj = {
+                            "start_lat": last_moved_lat,
+                            "start_lng": last_moved_lng,
+                            "end_lat": this_lat,
+                            "end_lng": this_lng,
+                            "ts_start": last_ts,
+                            "ts_end": this_ts,
+                            "moved": false,
+                            "dist": r
+                        };
+                        bike_moves.push(moveObj);
+
+                        //console.log( "move " + moveObj["ts_start"] );
+
+                        last_moved_lat = this_lat;
+                        last_moved_lng = this_lng;
 
 
-    //console.log( bike_moves );
+                    }
 
-    console.log( " max r = " + maxMax );
+                    last_lat = this_lat;
+                    last_lng = this_lng;
+                    last_ts = this_ts;
+
+                });
+            });
+
+
+            //console.log( bike_moves );
+
+            console.log(" max r = " + maxMax);
 
 //});
 
-$.each( bike_moves, function( idx, bike_move ) {
-    var pointA = new L.LatLng(bike_move["start_lat"], bike_move["start_lng"]);
-    var pointB = new L.LatLng(bike_move["end_lat"], bike_move["end_lng"]);
-    var pointList = [pointA, pointB];
+            $.each(bike_moves, function (idx, bike_move) {
+                var pointA = new L.LatLng(bike_move["start_lat"], bike_move["start_lng"]);
+                var pointB = new L.LatLng(bike_move["end_lat"], bike_move["end_lng"]);
+                var pointList = [pointA, pointB];
 
-    var polyline = new L.Polyline(pointList, {
-        time: "2013-01-22 10:24:59+01",
-        color: 'red',
-        weight: 3,
-        opacity: 1,
-        smoothFactor: 1
-    }).addTo(map);
+                var polyline = new L.Polyline(pointList, {
+                    time: "2013-01-22 10:24:59+01",
+                    color: 'red',
+                    weight: 3,
+                    opacity: 1,
+                    smoothFactor: 1
+                }).addTo(map);
 
-    bike_move["line"] = polyline;
-    bike_move["bike"] = L.marker([0,0], {icon: bikeIcon, "title": "Bike !" }).addTo(map);
-});
-
-
-console.log("Computation done");
+                bike_move["line"] = polyline;
+                bike_move["bike"] = L.marker([0, 0], {icon: bikeIconMoving, "title": "Bike !"}).addTo(map);
+            });
 
 
-tick();
-function tick() {
-    // Set the marker to be at the same point as one
+            console.log("Computation done");
 
 
-curVal = $('#slider').slider("option", "value");
-
-curVal = curVal + 50;
- $('#slider').slider("value", curVal );
-    // Move to the next point of the line
-    // until `j` reaches the length of the array.
-
-setTimeout(tick, 100);
-    //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
-}
+            tick();
+            function tick() {
+                // Set the marker to be at the same point as one
 
 
-updateBikeList();
-});
+                curVal = $('#slider').slider("option", "value");
 
-tick_move_bikes();
-function tick_move_bikes() {
+                curVal = curVal + 50;
+                $('#slider').slider("value", curVal);
+                // Move to the next point of the line
+                // until `j` reaches the length of the array.
 
-    if ( bike_moves == null ) {
-        setTimeout(tick_move_bikes, 200);
-        return;
-    }
-        
-    // move bike icons ?!?
+                setTimeout(tick, 100);
+                //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
+            }
 
-    //console.log( "ts is " + $( "#slider" ).slider( "option", "value" ) );
 
-    $.each( bike_moves, function( idx, bike_move ) {
-        var op = 0.0;
-        if (( bike_move["ts_end"] > g_thisTS ) && (bike_move["ts_start"] < g_thisTS)) {
+            updateBikeList();
+        });
 
-            tsDelta = bike_move["ts_end"] - bike_move["ts_start"];
-            tsPassed = g_thisTS - bike_move["ts_start"];
+        tick_move_bikes();
+        function tick_move_bikes() {
 
-            percentTraveled = tsPassed / tsDelta;
+            if (bike_moves == null) {
+                setTimeout(tick_move_bikes, 200);
+                return;
+            }
 
-            deltaX = bike_move["end_lat"] -  bike_move["start_lat"];
-            deltaY = bike_move["end_lng"] -  bike_move["start_lng"];
-            
-            posX = percentTraveled * deltaX + bike_move["start_lat"];
-            posY = percentTraveled * deltaY + bike_move["start_lng"];
+            // move bike icons ?!?
 
-            //console.log("moving bike to " + posX + " : " + posY );
+            //console.log( "ts is " + $( "#slider" ).slider( "option", "value" ) );
 
-            bike_move["bike"].setLatLng( new L.LatLng( posX, posY ));
+            $.each(bike_moves, function (idx, bike_move) {
+                var op = 0.0;
+                if (( bike_move["ts_end"] > g_thisTS ) && (bike_move["ts_start"] < g_thisTS)) {
 
-            op = 1.0;
+                    tsDelta = bike_move["ts_end"] - bike_move["ts_start"];
+                    tsPassed = g_thisTS - bike_move["ts_start"];
+
+                    percentTraveled = tsPassed / tsDelta;
+
+                    deltaX = bike_move["end_lat"] - bike_move["start_lat"];
+                    deltaY = bike_move["end_lng"] - bike_move["start_lng"];
+
+                    posX = percentTraveled * deltaX + bike_move["start_lat"];
+                    posY = percentTraveled * deltaY + bike_move["start_lng"];
+
+                    //console.log("moving bike to " + posX + " : " + posY );
+
+                    bike_move["bike"].setLatLng(new L.LatLng(posX, posY));
+
+                    op = 1.0;
+                }
+
+                //console.log( bike_move["line"].options.opacity );
+                bike_move["bike"].setOpacity(op);
+            });
+
+
+            // Set the marker to be at the same point as one
+            setTimeout(tick_move_bikes, 100);
+            //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
         }
 
-        //console.log( bike_move["line"].options.opacity );
-        bike_move["bike"].setOpacity( op );
-     });
-
-
-    // Set the marker to be at the same point as one
-    setTimeout(tick_move_bikes, 100);
-    //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
-}
-
-function selectBike( bike_number ){ 
+        function selectBike(bike_number) {
 
 // just for first bike ...
 
-    $.each( g_bikeData[bike_number], function( key, val ) {
-        console.log(val);        
-        L.marker([val[1], val[2]], {icon: bikeIcon, "title": "Bike " + bike_number + " Timestamp " + val[0] }).addTo(map);
-    });
+            $.each(g_bikeData[bike_number], function (key, val) {
+                console.log(val);
+                L.marker([val[1], val[2]], {
+                    icon: bikeIcon,
+                    "title": "Bike " + bike_number + " Timestamp " + val[0]
+                }).addTo(map);
+            });
 
-};
+        }
+        ;
 
 
-
-</script>
+    </script>
     <title>KA Bikes</title>
-  </head>
-  <body>
-    <h1>&gt; F&auml;cherrad&nbsp;<span class="cursor">&#9608;</span></h1>
-  <select id="selectBikeBox">
+</head>
+<body>
+<h1>&gt; F&auml;cherrad&nbsp;<span class="cursor">&#9608;</span></h1>
+<select id="selectBikeBox">
     <option>... loading ...</option>
-  </select>
- <div id="map"></div>
- <div id="slider"></div>
+</select>
+
+<div id="map"></div>
+<div id="slider"></div>
 <div id="time">TIME</div>
 
-  </body>
+</body>
 </html>
 
