@@ -100,6 +100,17 @@ change: function( event, ui ) {
             console.log( bike_move["ts_start"] );
             console.log( bike_move["ts_end"] );*/
             op = 1.0;
+            
+            if ( bike_move["moved" ] == false )
+            {
+                g_movingBikes.push( 
+                    {
+                        "ts_start" : bike_move["ts_start"],
+                        "ts_end" : bike_move["ts_end"] 
+                     });
+
+                bike_move["moved" ] = true;
+            }
         }
 
         //console.log( bike_move["line"].options.opacity );
@@ -143,49 +154,7 @@ $("#selectBikeBox").click(function() {
     selectBike ( parseInt( $(this).val() ) );
 });
 
-// add a marker in the given location, attach some popup content to it and open the popup
-/*L.marker([51.5, -0.09]).addTo(map)
-    .bindPopup('A pretty CSS3 popup. <br> Easily customizable.')
-    .openPopup();
-*/
-/*
-var marker1 = L.marker([1.5, -0.09], {time: "2013-01-22 08:42:26+01"}).addTo(map);
-var marker2 = L.marker([51.6, -0.09], {time: "2013-01-22 10:00:26+01"});
-var marker3 = L.marker([51.7, -0.09], {time: "2013-01-22 10:03:29+01"});
 
-var pointA = new L.LatLng(51.8, -0.09);
-var pointB = new L.LatLng(51.9, -0.2);
-var pointList = [pointA, pointB];
-
-var polyline = new L.Polyline(pointList, {
-    time: "2013-01-22 10:24:59+01",
-    color: 'red',
-    weight: 3,
-    opacity: 1,
-    smoothFactor: 1
-});
-
-var geojsonFeature = {
-    "type": "Feature",
-    "properties": {
-        "name": "Coors Field",
-        "amenity": "Baseball Stadium",
-        "popupContent": "This is where the Rockies play!"
-    },
-    "geometry": {
-        "type": "Point",
-        "coordinates": [-104.99404, 39.75621]
-    }
-};
-
-
-L.geoJson(geojsonFeature).addTo(map);*/
-/*
-layerGroup = L.layerGroup([marker1, marker2, marker3, polyline ]);
-var sliderControl = L.control.sliderControl({layer:layerGroup});
-map.addControl(sliderControl);
-sliderControl.startSlider();
-console.log('load done');*/
 });
 
 
@@ -232,17 +201,8 @@ console.log("Json loaded !");
         });
 */
     });
-
-   // console.log( "max ts = " + max_ts + " -- min ts = " + min_ts );
-
-   // $('#slider').slider("min", min_ts );
-   // $('#slider').slider("max", max_ts );
     $('#slider').slider("option", "min", min_ts );
     $('#slider').slider("option", "max", max_ts );
-
-// loop over bikes
-//$.each( g_bikeData, function( key, val ) { 
-    // loop over timestamps
 
     last_lat = 0;
     last_lng = 0;
@@ -280,6 +240,7 @@ $.each( g_bikeData, function( bike_id, bike_time_series ) {
                 "end_lng" : this_lng,
                 "ts_start" : last_ts,
                 "ts_end" : this_ts,
+                "moved": false,
                 "dist" : r 
             };
             bike_moves.push( moveObj );
@@ -334,12 +295,12 @@ function tick() {
 
 curVal = $('#slider').slider("option", "value");
 
-curVal = curVal + 250;
+curVal = curVal + 50;
  $('#slider').slider("value", curVal );
     // Move to the next point of the line
     // until `j` reaches the length of the array.
 
-setTimeout(tick, 400);
+setTimeout(tick, 100);
     //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
 }
 
@@ -374,7 +335,7 @@ function tick_move_bikes() {
             posX = percentTraveled * deltaX + bike_move["start_lat"];
             posY = percentTraveled * deltaY + bike_move["start_lng"];
 
-            console.log("moving bike to " + posX + " : " + posY );
+            //console.log("moving bike to " + posX + " : " + posY );
 
             bike_move["bike"].setLatLng( new L.LatLng( posX, posY ));
 
@@ -390,11 +351,6 @@ function tick_move_bikes() {
     setTimeout(tick_move_bikes, 100);
     //if (++j < geojson.coordinates.length) setTimeout(tick, 400);
 }
-
-//$.each( data, function( key, val ) {
-//items.push( "<li id='" + key + "'>" + val + "</li>" );
-
-
 
 function selectBike( bike_number ){ 
 
