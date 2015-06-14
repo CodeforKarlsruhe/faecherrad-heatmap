@@ -228,6 +228,7 @@
             g_bike_moves = [];
 
             var dtpoints = 0;
+            var maxts = 0;
             $.each(g_bikeData, function (bike_id, bike_time_series) {
                 // new bike initialize
                 last_lat = null;
@@ -260,23 +261,31 @@
                             maxMax = Math.max(maxMax, r);
                         }
                         if (r > maxR) {
-                            console.log("> making move");
-                            var moveObj = {
-                                "start_lat": last_moved_lat,
-                                "start_lng": last_moved_lng,
-                                "end_lat": this_lat,
-                                "end_lng": this_lng,
-                                "ts_start": last_ts,
-                                "ts_end": this_ts,
-                                "moved": false,
-                                "bike_number": bike_id,
-                                "dist": r
-                            };
-                            g_bike_moves.push(moveObj);
 
-                            //console.log( "move " + moveObj["ts_start"] );
-                            last_moved_lat = this_lat;
-                            last_moved_lng = this_lng;
+                            var delta_ts = this_ts - last_ts;
+
+                            // dont use the tail of very long rented bikes
+                            if ( delta_ts < 40000) {
+                                maxts = Math.max(maxts, delta_ts);
+
+                                console.log("> making move");
+                                var moveObj = {
+                                    "start_lat": last_moved_lat,
+                                    "start_lng": last_moved_lng,
+                                    "end_lat": this_lat,
+                                    "end_lng": this_lng,
+                                    "ts_start": last_ts,
+                                    "ts_end": this_ts,
+                                    "moved": false,
+                                    "bike_number": bike_id,
+                                    "dist": r
+                                };
+                                g_bike_moves.push(moveObj);
+
+                                //console.log( "move " + moveObj["ts_start"] );
+                                last_moved_lat = this_lat;
+                                last_moved_lng = this_lng;
+                            }
                         }
                     }
 
@@ -287,6 +296,7 @@
                 });
             });
 
+            console.log(" max ts = " + maxts );
             console.log(" max r = " + maxMax);
             console.log("found " + g_bike_moves.length + " bike moves with " + dtpoints + " data points");
 
