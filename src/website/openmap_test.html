@@ -15,6 +15,9 @@
     animation: blinking 1s ease-in-out infinite;
     text-shadow:none;
     }
+    #slider {
+    margin: 5px 0;
+    }
   select {
    background: transparent;
    width: 268px;
@@ -26,14 +29,14 @@
    height: 34px;
    color: #fff;
    }
-   #map { height: 600px; margin-top: 20px;}
+   #map { height: 600px; margin-top: 10px;}
   @keyframes blinking {
     from, to {color: transparent; }
     50% { color: #20F200; }
     }
   </style>
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
- <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+ <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/le-frog/jquery-ui.css">
  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
@@ -51,14 +54,14 @@ var g_movingBikes = [];
 
 function timeConverter(UNIX_timestamp){
   var a = new Date(UNIX_timestamp*1000);
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var months = ['Jan','Feb','Mar','Apr','May','Juni','Jul','Aug','Sep','Oct','Nov','Dec'];
   var year = a.getFullYear();
   var month = months[a.getMonth()];
   var date = a.getDate();
   var hour = a.getHours();
   var min = a.getMinutes();
   var sec = a.getSeconds();
-  var time = date + ',' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  var time = date + '. ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
   return time;
 }
 
